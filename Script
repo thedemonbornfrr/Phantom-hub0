@@ -1,0 +1,921 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local PathfindingService = game:GetService("PathfindingService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local hrp = character:WaitForChild("HumanoidRootPart")
+
+local PhantomHub = Instance.new("ScreenGui")
+PhantomHub.Name = "PhantomHub"
+PhantomHub.ResetOnSpawn = false
+PhantomHub.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+PhantomHub.Parent = playerGui
+
+local LoadingScreen = Instance.new("Frame")
+LoadingScreen.Name = "LoadingScreen"
+LoadingScreen.Size = UDim2.new(1, 0, 1, 0)
+LoadingScreen.Position = UDim2.new(0, 0, 0, 0)
+LoadingScreen.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+LoadingScreen.BorderSizePixel = 0
+LoadingScreen.ZIndex = 100
+LoadingScreen.Parent = PhantomHub
+
+local LoadingTitle = Instance.new("TextLabel")
+LoadingTitle.Size = UDim2.new(0, 400, 0, 60)
+LoadingTitle.Position = UDim2.new(0.5, -200, 0.5, -80)
+LoadingTitle.BackgroundTransparency = 1
+LoadingTitle.Text = "PHANTOM HUB"
+LoadingTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+LoadingTitle.TextSize = 42
+LoadingTitle.Font = Enum.Font.GothamBold
+LoadingTitle.TextTransparency = 1
+LoadingTitle.ZIndex = 101
+LoadingTitle.Parent = LoadingScreen
+
+local LoadingSubtitle = Instance.new("TextLabel")
+LoadingSubtitle.Size = UDim2.new(0, 400, 0, 40)
+LoadingSubtitle.Position = UDim2.new(0.5, -200, 0.5, -10)
+LoadingSubtitle.BackgroundTransparency = 1
+LoadingSubtitle.Text = "FNAF Eternal Nights"
+LoadingSubtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+LoadingSubtitle.TextSize = 22
+LoadingSubtitle.Font = Enum.Font.Gotham
+LoadingSubtitle.TextTransparency = 1
+LoadingSubtitle.ZIndex = 101
+LoadingSubtitle.Parent = LoadingScreen
+
+local LoadingCredits = Instance.new("TextLabel")
+LoadingCredits.Size = UDim2.new(0, 400, 0, 30)
+LoadingCredits.Position = UDim2.new(0.5, -200, 0.5, 50)
+LoadingCredits.BackgroundTransparency = 1
+LoadingCredits.Text = "Credits to: phantomILOV for making this"
+LoadingCredits.TextColor3 = Color3.fromRGB(180, 180, 180)
+LoadingCredits.TextSize = 16
+LoadingCredits.Font = Enum.Font.GothamBold
+LoadingCredits.TextTransparency = 1
+LoadingCredits.ZIndex = 101
+LoadingCredits.Parent = LoadingScreen
+
+local LoadingBar = Instance.new("Frame")
+LoadingBar.Size = UDim2.new(0, 0, 0, 4)
+LoadingBar.Position = UDim2.new(0.5, -200, 0.5, 100)
+LoadingBar.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+LoadingBar.BorderSizePixel = 0
+LoadingBar.ZIndex = 101
+LoadingBar.Parent = LoadingScreen
+
+local LoadingBarBG = Instance.new("Frame")
+LoadingBarBG.Size = UDim2.new(0, 400, 0, 4)
+LoadingBarBG.Position = UDim2.new(0.5, -200, 0.5, 100)
+LoadingBarBG.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+LoadingBarBG.BorderSizePixel = 0
+LoadingBarBG.ZIndex = 100
+LoadingBarBG.Parent = LoadingScreen
+
+TweenService:Create(LoadingTitle, TweenInfo.new(0.8), {TextTransparency = 0}):Play()
+wait(0.3)
+TweenService:Create(LoadingSubtitle, TweenInfo.new(0.8), {TextTransparency = 0}):Play()
+wait(0.3)
+TweenService:Create(LoadingCredits, TweenInfo.new(0.8), {TextTransparency = 0}):Play()
+wait(0.5)
+
+TweenService:Create(LoadingBar, TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 400, 0, 4)}):Play()
+wait(2.2)
+
+TweenService:Create(LoadingScreen, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+TweenService:Create(LoadingTitle, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+TweenService:Create(LoadingSubtitle, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+TweenService:Create(LoadingCredits, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+TweenService:Create(LoadingBar, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+TweenService:Create(LoadingBarBG, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+wait(0.6)
+LoadingScreen:Destroy()
+
+local function makeDraggable(frame)
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+    
+    local function update(input)
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+    
+    frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 450, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+MainFrame.BackgroundTransparency = 0.15
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+MainFrame.Parent = PhantomHub
+
+local MainFrameCorner = Instance.new("UICorner")
+MainFrameCorner.CornerRadius = UDim.new(0, 12)
+MainFrameCorner.Parent = MainFrame
+
+local MainBorder = Instance.new("UIStroke")
+MainBorder.Color = Color3.fromRGB(160, 160, 165)
+MainBorder.Thickness = 2
+MainBorder.Transparency = 0.3
+MainBorder.Parent = MainFrame
+
+makeDraggable(MainFrame)
+
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 45)
+TopBar.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+TopBar.BackgroundTransparency = 0.2
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TopBarCorner = Instance.new("UICorner")
+TopBarCorner.CornerRadius = UDim.new(0, 12)
+TopBarCorner.Parent = TopBar
+
+local TopBarFix = Instance.new("Frame")
+TopBarFix.Size = UDim2.new(1, 0, 0, 12)
+TopBarFix.Position = UDim2.new(0, 0, 1, -12)
+TopBarFix.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+TopBarFix.BackgroundTransparency = 0.2
+TopBarFix.BorderSizePixel = 0
+TopBarFix.Parent = TopBar
+
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(0.8, 0, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "Phantom Hub - FNAF Eternal Nights"
+Title.TextColor3 = Color3.fromRGB(220, 220, 225)
+Title.TextSize = 16
+Title.Font = Enum.Font.GothamBold
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TopBar
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 28, 0, 28)
+CloseButton.Position = UDim2.new(1, -38, 0.5, -14)
+CloseButton.BackgroundColor3 = Color3.fromRGB(180, 60, 60)
+CloseButton.BackgroundTransparency = 0.2
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 14
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = TopBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseButton
+
+local SidePanel = Instance.new("Frame")
+SidePanel.Name = "SidePanel"
+SidePanel.Size = UDim2.new(0, 120, 1, -45)
+SidePanel.Position = UDim2.new(0, 0, 0, 45)
+SidePanel.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+SidePanel.BackgroundTransparency = 0.3
+SidePanel.BorderSizePixel = 0
+SidePanel.Parent = MainFrame
+
+local MainButton = Instance.new("TextButton")
+MainButton.Name = "MainButton"
+MainButton.Size = UDim2.new(1, -20, 0, 35)
+MainButton.Position = UDim2.new(0, 10, 0, 15)
+MainButton.BackgroundColor3 = Color3.fromRGB(180, 180, 185)
+MainButton.BackgroundTransparency = 0.2
+MainButton.Text = "Main"
+MainButton.TextColor3 = Color3.fromRGB(240, 240, 245)
+MainButton.TextSize = 14
+MainButton.Font = Enum.Font.GothamBold
+MainButton.Parent = SidePanel
+
+local MainButtonCorner = Instance.new("UICorner")
+MainButtonCorner.CornerRadius = UDim.new(0, 6)
+MainButtonCorner.Parent = MainButton
+
+local ContentFrame = Instance.new("ScrollingFrame")
+ContentFrame.Name = "ContentFrame"
+ContentFrame.Size = UDim2.new(1, -140, 1, -60)
+ContentFrame.Position = UDim2.new(0, 130, 0, 55)
+ContentFrame.BackgroundTransparency = 1
+ContentFrame.BorderSizePixel = 0
+ContentFrame.ScrollBarThickness = 4
+ContentFrame.ScrollBarImageColor3 = Color3.fromRGB(160, 160, 165)
+ContentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+ContentFrame.Parent = MainFrame
+
+local UIListLayout = Instance.new("UIListLayout")
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0, 8)
+UIListLayout.Parent = ContentFrame
+
+local function createToggle(name, callback)
+    local ToggleFrame = Instance.new("Frame")
+    ToggleFrame.Size = UDim2.new(1, -15, 0, 42)
+    ToggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    ToggleFrame.BackgroundTransparency = 0.3
+    ToggleFrame.BorderSizePixel = 0
+    ToggleFrame.Parent = ContentFrame
+    
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(0, 8)
+    ToggleCorner.Parent = ToggleFrame
+    
+    local ToggleBorder = Instance.new("UIStroke")
+    ToggleBorder.Color = Color3.fromRGB(160, 160, 165)
+    ToggleBorder.Thickness = 1
+    ToggleBorder.Transparency = 0.4
+    ToggleBorder.Parent = ToggleFrame
+    
+    local ToggleLabel = Instance.new("TextLabel")
+    ToggleLabel.Size = UDim2.new(0.65, 0, 1, 0)
+    ToggleLabel.Position = UDim2.new(0, 12, 0, 0)
+    ToggleLabel.BackgroundTransparency = 1
+    ToggleLabel.Text = name
+    ToggleLabel.TextColor3 = Color3.fromRGB(220, 220, 225)
+    ToggleLabel.TextSize = 13
+    ToggleLabel.Font = Enum.Font.Gotham
+    ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    ToggleLabel.Parent = ToggleFrame
+    
+    local ToggleButton = Instance.new("TextButton")
+    ToggleButton.Size = UDim2.new(0, 45, 0, 24)
+    ToggleButton.Position = UDim2.new(1, -55, 0.5, -12)
+    ToggleButton.BackgroundColor3 = Color3.fromRGB(70, 70, 75)
+    ToggleButton.BackgroundTransparency = 0.2
+    ToggleButton.Text = ""
+    ToggleButton.Parent = ToggleFrame
+    
+    local ToggleButtonCorner = Instance.new("UICorner")
+    ToggleButtonCorner.CornerRadius = UDim.new(1, 0)
+    ToggleButtonCorner.Parent = ToggleButton
+    
+    local ToggleCircle = Instance.new("Frame")
+    ToggleCircle.Size = UDim2.new(0, 20, 0, 20)
+    ToggleCircle.Position = UDim2.new(0, 2, 0.5, -10)
+    ToggleCircle.BackgroundColor3 = Color3.fromRGB(200, 200, 205)
+    ToggleCircle.Parent = ToggleButton
+    
+    local CircleCorner = Instance.new("UICorner")
+    CircleCorner.CornerRadius = UDim.new(1, 0)
+    CircleCorner.Parent = ToggleCircle
+    
+    local toggled = false
+    
+    ToggleButton.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        
+        if toggled then
+            TweenService:Create(ToggleButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(150, 150, 155)}):Play()
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(1, -22, 0.5, -10)}):Play()
+        else
+            TweenService:Create(ToggleButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70, 70, 75)}):Play()
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 2, 0.5, -10)}):Play()
+        end
+        
+        callback(toggled)
+    end)
+    
+    return ToggleFrame
+end
+
+local ActivationButton = Instance.new("TextButton")
+ActivationButton.Name = "ActivationButton"
+ActivationButton.Size = UDim2.new(0, 90, 0, 35)
+ActivationButton.Position = UDim2.new(0, 15, 0.5, -17)
+ActivationButton.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+ActivationButton.BackgroundTransparency = 0.15
+ActivationButton.Text = "Phantom"
+ActivationButton.TextColor3 = Color3.fromRGB(220, 220, 225)
+ActivationButton.TextSize = 14
+ActivationButton.Font = Enum.Font.GothamBold
+ActivationButton.Active = true
+ActivationButton.Parent = PhantomHub
+
+local ActivationCorner = Instance.new("UICorner")
+ActivationCorner.CornerRadius = UDim.new(0, 8)
+ActivationCorner.Parent = ActivationButton
+
+local ActivationBorder = Instance.new("UIStroke")
+ActivationBorder.Color = Color3.fromRGB(160, 160, 165)
+ActivationBorder.Thickness = 2
+ActivationBorder.Transparency = 0.3
+ActivationBorder.Parent = ActivationButton
+
+local DropdownIcon = Instance.new("TextLabel")
+DropdownIcon.Size = UDim2.new(0, 20, 1, 0)
+DropdownIcon.Position = UDim2.new(1, -22, 0, 0)
+DropdownIcon.BackgroundTransparency = 1
+DropdownIcon.Text = "▼"
+DropdownIcon.TextColor3 = Color3.fromRGB(220, 220, 225)
+DropdownIcon.TextSize = 10
+DropdownIcon.Font = Enum.Font.GothamBold
+DropdownIcon.Parent = ActivationButton
+
+makeDraggable(ActivationButton)
+
+local DiscordButton = Instance.new("ImageButton")
+DiscordButton.Name = "DiscordButton"
+DiscordButton.Size = UDim2.new(0, 45, 0, 45)
+DiscordButton.Position = UDim2.new(0, 15, 0.5, 30)
+DiscordButton.BackgroundColor3 = Color3.fromRGB(88, 101, 242)
+DiscordButton.BackgroundTransparency = 0.15
+DiscordButton.Image = "rbxassetid://10367063073"
+DiscordButton.Active = true
+DiscordButton.Parent = PhantomHub
+
+local DiscordCorner = Instance.new("UICorner")
+DiscordCorner.CornerRadius = UDim.new(0, 8)
+DiscordCorner.Parent = DiscordButton
+
+local DiscordBorder = Instance.new("UIStroke")
+DiscordBorder.Color = Color3.fromRGB(160, 160, 165)
+DiscordBorder.Thickness = 2
+DiscordBorder.Transparency = 0.3
+DiscordBorder.Parent = DiscordButton
+
+makeDraggable(DiscordButton)
+
+DiscordButton.MouseButton1Click:Connect(function()
+    setclipboard("https://discord.gg/SxhTTaxM5T")
+    
+    local NotifText = Instance.new("TextLabel")
+    NotifText.Size = UDim2.new(0, 200, 0, 30)
+    NotifText.Position = UDim2.new(0.5, -100, 0.1, 0)
+    NotifText.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    NotifText.BackgroundTransparency = 0.15
+    NotifText.Text = "Discord invite copied!"
+    NotifText.TextColor3 = Color3.fromRGB(150, 255, 150)
+    NotifText.TextSize = 14
+    NotifText.Font = Enum.Font.GothamBold
+    NotifText.BorderSizePixel = 0
+    NotifText.Parent = PhantomHub
+    
+    local NotifCorner = Instance.new("UICorner")
+    NotifCorner.CornerRadius = UDim.new(0, 8)
+    NotifCorner.Parent = NotifText
+    
+    wait(2)
+    NotifText:Destroy()
+end)
+
+local NotificationFrame = Instance.new("Frame")
+NotificationFrame.Name = "NotificationFrame"
+NotificationFrame.Size = UDim2.new(0, 280, 0, 45)
+NotificationFrame.Position = UDim2.new(0.5, -140, 0, 15)
+NotificationFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+NotificationFrame.BackgroundTransparency = 0.15
+NotificationFrame.BorderSizePixel = 0
+NotificationFrame.Active = true
+NotificationFrame.Parent = PhantomHub
+
+local NotifCorner = Instance.new("UICorner")
+NotifCorner.CornerRadius = UDim.new(0, 10)
+NotifCorner.Parent = NotificationFrame
+
+local NotifBorder = Instance.new("UIStroke")
+NotifBorder.Color = Color3.fromRGB(160, 160, 165)
+NotifBorder.Thickness = 2
+NotifBorder.Transparency = 0.3
+NotifBorder.Parent = NotificationFrame
+
+local NotifName = Instance.new("TextLabel")
+NotifName.Name = "NotifName"
+NotifName.Size = UDim2.new(0.65, 0, 1, 0)
+NotifName.Position = UDim2.new(0, 15, 0, 0)
+NotifName.BackgroundTransparency = 1
+NotifName.Text = "No Threat"
+NotifName.TextColor3 = Color3.fromRGB(150, 255, 150)
+NotifName.TextSize = 14
+NotifName.Font = Enum.Font.GothamBold
+NotifName.TextXAlignment = Enum.TextXAlignment.Left
+NotifName.Parent = NotificationFrame
+
+local DistanceBox = Instance.new("Frame")
+DistanceBox.Size = UDim2.new(0, 55, 0, 28)
+DistanceBox.Position = UDim2.new(1, -65, 0.5, -14)
+DistanceBox.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+DistanceBox.BackgroundTransparency = 0.2
+DistanceBox.BorderSizePixel = 0
+DistanceBox.Parent = NotificationFrame
+
+local DistanceCorner = Instance.new("UICorner")
+DistanceCorner.CornerRadius = UDim.new(0, 8)
+DistanceCorner.Parent = DistanceBox
+
+local DistanceBorder = Instance.new("UIStroke")
+DistanceBorder.Color = Color3.fromRGB(160, 160, 165)
+DistanceBorder.Thickness = 1
+DistanceBorder.Transparency = 0.4
+DistanceBorder.Parent = DistanceBox
+
+local DistanceLabel = Instance.new("TextLabel")
+DistanceLabel.Size = UDim2.new(1, 0, 1, 0)
+DistanceLabel.BackgroundTransparency = 1
+DistanceLabel.Text = "0"
+DistanceLabel.TextColor3 = Color3.fromRGB(220, 220, 225)
+DistanceLabel.TextSize = 13
+DistanceLabel.Font = Enum.Font.GothamBold
+DistanceLabel.Parent = DistanceBox
+
+makeDraggable(NotificationFrame)
+
+local FuseButton = Instance.new("TextButton")
+FuseButton.Name = "FuseButton"
+FuseButton.Size = UDim2.new(0, 140, 0, 40)
+FuseButton.Position = UDim2.new(0.5, -70, 1, -60)
+FuseButton.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+FuseButton.BackgroundTransparency = 0.2
+FuseButton.Text = "Go Get Fuses"
+FuseButton.TextColor3 = Color3.fromRGB(20, 20, 25)
+FuseButton.TextSize = 16
+FuseButton.Font = Enum.Font.GothamBold
+FuseButton.Visible = false
+FuseButton.Active = true
+FuseButton.Parent = PhantomHub
+
+local FuseButtonCorner = Instance.new("UICorner")
+FuseButtonCorner.CornerRadius = UDim.new(0, 10)
+FuseButtonCorner.Parent = FuseButton
+
+local FuseButtonBorder = Instance.new("UIStroke")
+FuseButtonBorder.Color = Color3.fromRGB(200, 150, 30)
+FuseButtonBorder.Thickness = 2
+FuseButtonBorder.Transparency = 0.3
+FuseButtonBorder.Parent = FuseButton
+
+makeDraggable(FuseButton)
+
+local guiVisible = false
+
+ActivationButton.MouseButton1Click:Connect(function()
+    guiVisible = not guiVisible
+    MainFrame.Visible = guiVisible
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    guiVisible = false
+    MainFrame.Visible = false
+end)
+
+local espEnabled = false
+local notificationEnabled = false
+local highlightFuses = false
+local itemESPEnabled = false
+local autoWindBox = false
+local espObjects = {}
+local trackedAnimatronics = {}
+local trackedFuses = {}
+local trackedItems = {}
+local pathfinding = false
+
+local animatronicColors = {
+    ["golden freddy"] = Color3.fromRGB(255, 215, 0),
+    ["freddy"] = Color3.fromRGB(139, 90, 43),
+    ["chica"] = Color3.fromRGB(255, 165, 0),
+    ["bonnie"] = Color3.fromRGB(100, 149, 237),
+    ["foxy"] = Color3.fromRGB(220, 20, 60)
+}
+
+local function getAnimatronicColor(name)
+    local lowerName = name:lower()
+    for key, color in pairs(animatronicColors) do
+        if lowerName:find(key) then
+            return color
+        end
+    end
+    return Color3.fromRGB(255, 100, 100)
+end
+
+local function clearESP()
+    for _, obj in pairs(espObjects) do
+        if obj and obj.Parent then
+            obj:Destroy()
+        end
+    end
+    espObjects = {}
+    trackedAnimatronics = {}
+    trackedFuses = {}
+    trackedItems = {}
+end
+
+local function createHighlight(obj, color)
+    if obj:FindFirstChild("PhantomHighlight") then
+        return
+    end
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "PhantomHighlight"
+    highlight.FillColor = color
+    highlight.OutlineColor = color
+    highlight.FillTransparency = 0.5
+    highlight.OutlineTransparency = 0
+    highlight.Parent = obj
+    
+    table.insert(espObjects, highlight)
+    return highlight
+end
+
+local function isAnimatronic(obj)
+    if not obj:IsA("Model") then return false end
+    local name = obj.Name:lower()
+    return name:find("animatronic") or name:find("freddy") or name:find("bonnie") or name:find("chica") or name:find("foxy")
+end
+
+local function isDoor(obj)
+    local name = obj.Name:lower()
+    return name:find("door") and not name:find("frame")
+end
+
+local function isFuse(obj)
+    local name = obj.Name:lower()
+    return name:find("fuse") or name:find("generator") or name:find("power")
+end
+
+local function isItem(obj)
+    local name = obj.Name:lower()
+    return name:find("flashlight") or name:find("mask") or name:find("tool") or name:find("battery") or name:find("key") or name:find("item")
+end
+
+local function openNearbyDoors()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    
+    local playerPos = char.HumanoidRootPart.Position
+    
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if isDoor(obj) then
+            local doorPart = obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart") or obj
+            if doorPart then
+                local distance = (playerPos - doorPart.Position).Magnitude
+                if distance < 15 then
+                    for _, child in pairs(obj:GetDescendants()) do
+                        if child:IsA("ClickDetector") then
+                            fireclickdetector(child)
+                        elseif child:IsA("ProximityPrompt") then
+                            fireproximityprompt(child)
+                        end
+                    end
+                    
+                    -- Try to find and trigger Open value or attribute
+                    local openValue = obj:FindFirstChild("Open") or obj:FindFirstChild("Opened")
+                    if openValue and openValue:IsA("BoolValue") then
+                        openValue.Value = true
+                    end
+                end
+            end
+        end
+    end
+end
+
+local function setupESP()
+    clearESP()
+    
+    if espEnabled then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if isAnimatronic(obj) and not trackedAnimatronics[obj] then
+                local color = getAnimatronicColor(obj.Name)
+                createHighlight(obj, color)
+                trackedAnimatronics[obj] = true
+            end
+        end
+    end
+    
+    if highlightFuses then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if (obj:IsA("Model") or obj:IsA("Part")) and isFuse(obj) and not trackedFuses[obj] then
+                createHighlight(obj, Color3.fromRGB(255, 255, 0))
+                trackedFuses[obj] = true
+            end
+        end
+    end
+    
+    if itemESPEnabled then
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if (obj:IsA("Model") or obj:IsA("Tool") or obj:IsA("Part")) and isItem(obj) and not trackedItems[obj] then
+                createHighlight(obj, Color3.fromRGB(0, 255, 255))
+                trackedItems[obj] = true
+            end
+        end
+    end
+end
+
+workspace.DescendantAdded:Connect(function(obj)
+    task.wait(0.1)
+    
+    if espEnabled and isAnimatronic(obj) and not trackedAnimatronics[obj] then
+        local color = getAnimatronicColor(obj.Name)
+        createHighlight(obj, color)
+        trackedAnimatronics[obj] = true
+    end
+    
+    if highlightFuses and (obj:IsA("Model") or obj:IsA("Part")) and isFuse(obj) and not trackedFuses[obj] then
+        createHighlight(obj, Color3.fromRGB(255, 255, 0))
+        trackedFuses[obj] = true
+    end
+    
+    if itemESPEnabled and (obj:IsA("Model") or obj:IsA("Tool") or obj:IsA("Part")) and isItem(obj) and not trackedItems[obj] then
+        createHighlight(obj, Color3.fromRGB(0, 255, 255))
+        trackedItems[obj] = true
+    end
+end)
+
+local function findClosestFuse()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then 
+        return nil 
+    end
+    
+    local closestFuse = nil
+    local closestDistance = math.huge
+    local playerPos = char.HumanoidRootPart.Position
+    
+    for obj, _ in pairs(trackedFuses) do
+        if obj and obj.Parent then
+            local fusePart = obj:IsA("Model") and obj:FindFirstChildWhichIsA("BasePart") or obj
+            if fusePart then
+                local distance = (playerPos - fusePart.Position).Magnitude
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestFuse = fusePart
+                end
+            end
+        end
+    end
+    
+    return closestFuse
+end
+
+local function pathfindToFuse()
+    if pathfinding then
+        pathfinding = false
+        FuseButton.Text = "Go Get Fuses"
+        FuseButton.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+        return
+    end
+    
+    local char = player.Character
+    if not char then return end
+    
+    local hum = char:FindFirstChild("Humanoid")
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not hum or not root then return end
+    
+    local targetFuse = findClosestFuse()
+    if not targetFuse then return end
+    
+    pathfinding = true
+    FuseButton.Text = "Stop"
+    FuseButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
+    
+    spawn(function()
+        while pathfinding do
+            local char = player.Character
+            if not char then break end
+            
+            local hum = char:FindFirstChild("Humanoid")
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if not hum or not root then break end
+            
+            targetFuse = findClosestFuse()
+            if not targetFuse then
+                pathfinding = false
+                FuseButton.Text = "Go Get Fuses"
+                FuseButton.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+                break
+            end
+            
+            openNearbyDoors()
+            
+            local path = PathfindingService:CreatePath({
+                AgentRadius = 2,
+                AgentHeight = 5,
+                AgentCanJump = true,
+                AgentJumpHeight = 7,
+                AgentMaxSlope = 45
+            })
+            
+            local waypoints
+            local success, errorMsg = pcall(function()
+                path:ComputeAsync(root.Position, targetFuse.Position)
+                waypoints = path:GetWaypoints()
+            end)
+            
+            if not success or not waypoints or #waypoints == 0 then
+                wait(1)
+                continue
+            end
+            
+            local stuckTime = 0
+            local lastPosition = root.Position
+            
+            for i, waypoint in ipairs(waypoints) do
+                if not pathfinding then break end
+                
+                openNearbyDoors()
+                
+                if waypoint.Action == Enum.PathWaypointAction.Jump then
+                    hum:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+                
+                hum:MoveTo(waypoint.Position)
+                
+                local moveStartTime = tick()
+                
+                repeat
+                    if not pathfinding then break end
+                    
+                    local currentPos = root.Position
+                    if (currentPos - lastPosition).Magnitude < 0.5 then
+                        stuckTime = stuckTime + 0.1
+                    else
+                        stuckTime = 0
+                    end
+                    lastPosition = currentPos
+                    
+                    if stuckTime > 5 then
+                        break
+                    end
+                    
+                    if tick() - moveStartTime > 6 then
+                        break
+                    end
+                    
+                    wait(0.1)
+                until (root.Position - waypoint.Position).Magnitude < 5
+                
+                if stuckTime > 5 then
+                    stuckTime = 0
+                    break
+                end
+            end
+            
+            if (root.Position - targetFuse.Position).Magnitude < 10 then
+                for _, child in pairs(targetFuse.Parent:GetDescendants()) do
+                    if child:IsA("ClickDetector") then
+                        fireclickdetector(child)
+                    elseif child:IsA("ProximityPrompt") then
+                        fireproximityprompt(child)
+                    end
+                end
+                
+                wait(1)
+            end
+            
+            wait(0.5)
+        end
+        
+        pathfinding = false
+        FuseButton.Text = "Go Get Fuses"
+        FuseButton.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
+    end)
+end
+
+FuseButton.MouseButton1Click:Connect(pathfindToFuse)
+
+local function findClosestAnimatronic()
+    local char = player.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then 
+        return nil, math.huge 
+    end
+    
+    local closestAnimatronic = nil
+    local closestDistance = math.huge
+    local playerPos = char.HumanoidRootPart.Position
+    
+    for obj, _ in pairs(trackedAnimatronics) do
+        if obj and obj.Parent then
+            local rootPart = obj:FindFirstChild("HumanoidRootPart") or obj:FindFirstChildWhichIsA("BasePart")
+            if rootPart then
+                local distance = (playerPos - rootPart.Position).Magnitude
+                if distance < closestDistance then
+                    closestDistance = distance
+                    closestAnimatronic = obj
+                end
+            end
+        end
+    end
+    
+    return closestAnimatronic, closestDistance
+end
+
+local function windMarionetteBox()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("ClickDetector") or obj:IsA("ProximityPrompt") then
+            local parent = obj.Parent
+            if parent and (parent.Name:lower():find("marionette") or parent.Name:lower():find("box") or parent.Name:lower():find("music")) then
+                if obj:IsA("ClickDetector") then
+                    fireclickdetector(obj)
+                elseif obj:IsA("ProximityPrompt") then
+                    fireproximityprompt(obj)
+                end
+            end
+        end
+    end
+end
+
+createToggle("Animatronic ESP", function(state)
+    espEnabled = state
+    setupESP()
+end)
+
+createToggle("Proximity Notifications", function(state)
+    notificationEnabled = state
+    if not state then
+        NotifName.Text = "No Threat"
+        DistanceLabel.Text = "0"
+        NotifName.TextColor3 = Color3.fromRGB(150, 255, 150)
+    end
+end)
+
+createToggle("Highlight Fuses", function(state)
+    highlightFuses = state
+    FuseButton.Visible = state
+    setupESP()
+end)
+
+createToggle("Item ESP", function(state)
+    itemESPEnabled = state
+    setupESP()
+end)
+
+createToggle("Auto Wind Box", function(state)
+    autoWindBox = state
+end)
+
+local lastUpdate = 0
+local updateInterval = 0.5
+
+RunService.Heartbeat:Connect(function()
+    local currentTime = tick()
+    
+    if notificationEnabled and (currentTime - lastUpdate) >= updateInterval then
+        lastUpdate = currentTime
+        
+        local closest, distance = findClosestAnimatronic()
+        if closest then
+            NotifName.Text = closest.Name
+            DistanceLabel.Text = tostring(math.floor(distance))
+            
+            if distance < 20 then
+                NotifName.TextColor3 = Color3.fromRGB(255, 80, 80)
+            elseif distance < 50 then
+                NotifName.TextColor3 = Color3.fromRGB(255, 255, 120)
+            else
+                NotifName.TextColor3 = Color3.fromRGB(150, 255, 150)
+            end
+        else
+            NotifName.Text = "No Threat"
+            DistanceLabel.Text = "0"
+            NotifName.TextColor3 = Color3.fromRGB(150, 255, 150)
+        end
+    end
+end)
+
+spawn(function()
+    while wait(1) do
+        if autoWindBox then
+            windMarionetteBox()
+        end
+    end
+end)
+
+UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ContentFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 20)
+end)
